@@ -10,6 +10,8 @@ function setup() {
     let res = createInvaderLocations(5, 10, 20, 50);
     locations = res[0];
     size = res[1];
+    bulletLength = 20;
+    bulletSpeed = 1;
 }
 
 // generate m rows and n columns of invaders based on paddingBottom(space between rows) 
@@ -43,6 +45,9 @@ let switched = false;
 let switched_check = false;
 let locations = [];
 let size
+let bullets = [];
+let bulletLength;
+let bulletSpeed;
 
 // check if invaders' moving direction need to change
 // if so, change the direction and set direction switched flag
@@ -50,7 +55,6 @@ function updateDirection(locations, size){
     let endOfRow = locations[0][locations[0].length - 1][0];
     let startOfRow = locations[0][0][0];
     if (endOfRow + size >= width-speedInvaderX || startOfRow <= speedInvaderX){
-        console.log(switched_check)
         if (!switched_check){
             direction *= -1;
             switched = true;
@@ -67,7 +71,7 @@ function computeNewLocation(locations, size){
     if (switched){
         for (let i = 0; i < locations.length; i++){
             for (let j = 0; j < locations[i].length; j++){
-                if (coordinates != null){
+                if (locations[i][j] !== null){
                     locations[i][j][1] += speedInvaderY;
                 }
             }
@@ -78,7 +82,7 @@ function computeNewLocation(locations, size){
     } else {
         for (let i = 0; i < locations.length; i++){
             for (let j = 0; j < locations[i].length; j++){
-                if (coordinates != null){
+                if (locations[i][j] !== null){
                     locations[i][j][0] += speedInvaderX * direction;
                 }
             }
@@ -93,7 +97,7 @@ function drawInvaders(locations, size){
         let row = locations[i];
         for (let j = 0; j < row.length; j++){
             coordinates = row[j];
-            if (coordinates != null){
+            if (coordinates !== null){
                 x = coordinates[0];
                 y = coordinates[1];
                 if (i%2 == 0){
@@ -103,6 +107,43 @@ function drawInvaders(locations, size){
                 }
             }
         }
+    }
+}
+
+function drawBullets(){
+    stroke(255, 204, 0);
+    for (let i = 0; i < bullets.length; i++){
+        bullet = bullets[i];
+        if (bullet !== null){
+            line(bullet[0], bullet[1], bullet[2], bullet[3]);
+        }
+    }
+}
+
+function computeNewBulletsLoc(){
+    for (let i = 0; i < bullets.length; i++){
+        if (bullets[i] !== null){
+            bullets[i][1] -= bulletSpeed;
+            bullets[i][3] -= bulletSpeed;
+            for (let j = 0; j < locations.length; j++){
+                for (let k = 0; k < locations[0].length; k++){
+                    if (locations[j][k] !== null){
+                        if (bullets[i][3] <= locations[j][k][1]+size && bullets[i][0] >= locations[j][k][0] && bullets[i][0] <= locations[j][k][0]+size){
+                            bullets[i] = null;
+                            locations[j][k] = null;
+                            break;
+                        }
+                    } 
+                }
+            }
+        }
+        
+    }
+}
+
+function keyPressed(){
+    if (keyCode == UP_ARROW){
+        bullets[bullets.length] = [shooterX, shooterY, shooterX, shooterY-bulletLength];
     }
 }
 
@@ -116,6 +157,8 @@ function draw() {
     // shooter functionings
     fill(255, 204, 0);
     circle(shooterX, shooterY, shooter);
+    drawBullets();
+    computeNewBulletsLoc();
     if (keyIsPressed){
         if (keyCode === RIGHT_ARROW) {
             shooterX += speedShooter;
